@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Scout",
+    "slug": "scout-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "scout",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0F0F1A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.scout.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0F1A"
+      },
+      "package": "com.scout.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "backgroundColor": "#0F0F1A"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
