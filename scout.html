@@ -407,7 +407,7 @@ html, body { background: var(--white); color: var(--ink); font-family: 'Inter', 
 </div>
 
 <script>
-const API = 'http://localhost:3001/api';
+const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3001/api' : '/api';
 const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
 const FB = ['fb-a','fb-b','fb-c','fb-d','fb-e'];
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];

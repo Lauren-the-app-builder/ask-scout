@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "scout.html", "use": "@vercel/static" },
+    { "src": "scout-icon-180.png", "use": "@vercel/static" },
+    { "src": "lauren-avatar.png", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/scout-icon-180.png", "dest": "/scout-icon-180.png" },
+    { "src": "/lauren-avatar.png", "dest": "/lauren-avatar.png" },
+    { "src": "/(.*)", "dest": "/scout.html" }
+  ]
+}
