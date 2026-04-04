@@ -83,7 +83,7 @@ router.post('/message', auth, async (req, res) => {
 
     // Call Claude
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-5-20241022',
       max_tokens: 500,
       system: buildSystemPrompt(profile, upNextTitles),
       messages,
@@ -127,7 +127,7 @@ router.get('/daily', auth, async (req, res) => {
     const upNextTitles = upNext.map(ub => `"${ub.book.title}" by ${ub.book.author}`);
 
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-5-20241022',
       max_tokens: 250,
       system: buildSystemPrompt(profile, upNextTitles),
       messages: [{

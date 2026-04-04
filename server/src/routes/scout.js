@@ -23,7 +23,7 @@ router.post('/chat', async (req, res) => {
     messages.push({ role: 'user', content: message });
 
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-5-20241022',
       max_tokens: 500,
       system: SYSTEM_PROMPT,
       messages,
