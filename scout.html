@@ -23,7 +23,9 @@
   --red-light: #FFF0F0;
   --red-mid: #E8354A;
 }
-html, body { background: var(--white); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; position: relative; }
+html { height: 100%; overflow: hidden; }
+body { background: var(--white); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; position: relative; height: 100%; overflow: hidden; }
+.page { overflow-y: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 50px - 56px); position: fixed; top: 50px; left: 0; right: 0; max-width: 430px; margin: 0 auto; }
 
 /* TOP BAR — simplified for mobile */
 .topbar {
@@ -64,7 +66,7 @@ html, body { background: var(--white); color: var(--ink); font-family: 'Inter', 
 .bot-btn.active::after { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--red); }
 .bot-btn:not(.active) .bot-btn-icon { opacity: 0.35; }
 
-.page { padding-top: 50px; padding-bottom: 60px; }
+.page { padding-top: 0; padding-bottom: 20px; }
 .page-section { display: none; }
 .page-section.visible { display: block; }
 
