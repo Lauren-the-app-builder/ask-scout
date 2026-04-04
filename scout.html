@@ -212,16 +212,25 @@ body { background: var(--white); color: var(--ink); font-family: 'Inter', system
 .modal-error { font-size: 11px; color: var(--red); margin-bottom: 10px; }
 .modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 20px; color: var(--ink-muted); cursor: pointer; line-height: 1; }
 
-/* SEARCH MODAL */
-.search-modal .modal-box { width: 520px; padding: 28px 28px 20px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
-.search-results { flex: 1; overflow-y: auto; margin-top: 12px; }
-.search-item { display: flex; gap: 12px; padding: 10px 8px; border-radius: 8px; cursor: pointer; transition: background 0.12s; align-items: center; }
-.search-item:hover { background: var(--red-light); }
-.search-cover { width: 36px; height: 54px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--line); }
+/* SEARCH — full screen takeover */
+.search-screen { position: fixed; inset: 0; z-index: 110; background: white; display: flex; flex-direction: column; max-width: 430px; margin: 0 auto; animation: searchIn 0.2s ease; }
+@keyframes searchIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.search-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.search-bar input { flex: 1; padding: 10px 0; border: none; font-size: 16px; font-family: 'Inter', sans-serif; color: var(--ink); outline: none; background: none; }
+.search-bar input::placeholder { color: var(--ink-faint); }
+.search-cancel { background: none; border: none; color: var(--red); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; padding: 8px 4px; flex-shrink: 0; }
+.search-icon { color: var(--ink-faint); flex-shrink: 0; display: flex; }
+.search-results { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.search-item { display: flex; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: center; transition: background 0.1s; }
+.search-item:active { background: var(--red-light); }
+.search-cover { width: 40px; height: 60px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: #1C1C1C; }
 .search-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.search-book-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.2; }
-.search-book-author { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
-.search-empty { text-align: center; padding: 32px 0; color: var(--ink-faint); font-size: 12px; }
+.search-book-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.2; }
+.search-book-author { font-size: 11px; color: var(--ink-muted); margin-top: 3px; }
+.search-book-year { font-size: 10px; color: var(--ink-faint); }
+.search-empty { text-align: center; padding: 48px 20px; color: var(--ink-faint); font-size: 13px; line-height: 1.6; }
+.search-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.3; display: block; }
+@keyframes pulse { from { opacity: 0.3; } to { opacity: 0.8; } }
 
 /* CHAT PANEL */
 .chat-panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; background: white; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -443,59 +452,76 @@ async function api(path, opts = {}) {
 
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
-/* ── REUSABLE SEARCH MODAL ── */
-let _searchVersion = 0;
+/* ── SEARCH (full screen) ── */
 function createSearchModal({ title, subtitle, placeholder, onSelect }) {
-  if (document.querySelector('.search-modal')) return;
-  const ov = document.createElement('div');
-  ov.className = 'modal-overlay search-modal';
-  ov.innerHTML = `<div class="modal-box"><button class="modal-close">✕</button>
-    <div class="modal-title" style="font-size:22px">${title}</div>
-    <div class="modal-sub">${subtitle}</div>
-    <input class="modal-input" placeholder="${placeholder}" autofocus>
-    <div class="search-results"><div class="search-empty">Start typing to search</div></div></div>`;
-  document.body.appendChild(ov);
-  ov.querySelector('.modal-close').onclick = () => ov.remove();
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  if (document.querySelector('.search-screen')) return;
+  const screen = document.createElement('div');
+  screen.className = 'search-screen';
+  screen.innerHTML = `
+    <div class="search-bar">
+      <span class="search-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <input type="search" placeholder="${placeholder}" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="search-cancel">Cancel</button>
+    </div>
+    <div class="search-results">
+      <div class="search-empty"><div class="search-empty-icon">📖</div>${subtitle}</div>
+    </div>`;
+  document.body.appendChild(screen);
 
-  const input = ov.querySelector('.modal-input');
-  const results = ov.querySelector('.search-results');
-  let searchTimer = null;
-  let currentVersion = 0;
+  const input = screen.querySelector('input');
+  const results = screen.querySelector('.search-results');
+  const close = () => { screen.style.animation = 'none'; screen.style.opacity = '0'; setTimeout(() => screen.remove(), 100); };
+  screen.querySelector('.search-cancel').onclick = close;
+
+  let timer = null;
+  let version = 0;
+  let lastResults = [];
 
   input.addEventListener('input', () => {
     const q = input.value.trim();
-    clearTimeout(searchTimer);
-    if (!q) { results.innerHTML = '<div class="search-empty">Start typing to search</div>'; return; }
-    if (q.length < 2) return;
-    results.innerHTML = '<div class="search-empty" style="color:var(--ink-muted)">Searching...</div>';
-    const version = ++currentVersion;
-    searchTimer = setTimeout(async () => {
+    clearTimeout(timer);
+    if (!q) {
+      results.innerHTML = `<div class="search-empty"><div class="search-empty-icon">📖</div>${subtitle}</div>`;
+      lastResults = [];
+      return;
+    }
+    // Show subtle loading indicator without clearing results (no flash)
+    if (!lastResults.length) {
+      results.innerHTML = '<div class="search-empty" style="color:var(--ink-muted)"><div class="search-empty-icon" style="animation:pulse 1s infinite alternate">🔍</div>Searching...</div>';
+    }
+    const v = ++version;
+    timer = setTimeout(async () => { /* 250ms debounce */
       try {
         const books = await api('/books/search?q=' + encodeURIComponent(q));
-        if (version !== currentVersion) return; // stale
-        if (!books.length) { results.innerHTML = '<div class="search-empty">No results — try a different spelling</div>'; return; }
-        results.innerHTML = books.slice(0, 8).map((b, i) => {
+        if (v !== version) return;
+        lastResults = books.slice(0, 10);
+        if (!lastResults.length) {
+          results.innerHTML = `<div class="search-empty"><div class="search-empty-icon">🤔</div>Nothing found for "${q}"<br><span style="font-size:11px;color:var(--ink-faint)">Try the author name, or a shorter title</span></div>`;
+          return;
+        }
+        results.innerHTML = lastResults.map((b, i) => {
           const cv = b.coverUrl || '';
           return `<div class="search-item" data-idx="${i}">
-            <div class="search-cover">${cv ? `<img src="${cv}" onerror="this.style.opacity='0'">` : ''}</div>
-            <div><div class="search-book-title">${b.title}</div><div class="search-book-author">${b.author}${b.year ? ' · ' + b.year : ''}</div></div>
+            <div class="search-cover">${cv ? `<img src="${cv}" onerror="this.style.opacity='0'" loading="lazy">` : ''}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="search-book-title">${b.title}</div>
+              <div class="search-book-author">${b.author}</div>
+              ${b.year ? `<div class="search-book-year">${b.year}</div>` : ''}
+            </div>
           </div>`;
         }).join('');
-        const bookList = books.slice(0, 8);
         results.querySelectorAll('.search-item').forEach(el => {
-          el.onclick = () => { onSelect(bookList[parseInt(el.dataset.idx)], ov); };
+          el.onclick = () => { onSelect(lastResults[parseInt(el.dataset.idx)], { remove: close }); };
         });
       } catch (e) {
-        if (version !== currentVersion) return;
+        if (v !== version) return;
         results.innerHTML = `<div class="search-empty" style="color:var(--red)">${e.message}</div>`;
       }
-    }, 500);
+    }, 300);
   });
 
-  // Focus after animation
-  setTimeout(() => input.focus(), 100);
-  return ov;
+  setTimeout(() => input.focus(), 50);
+  return { remove: close };
 }
 function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); }
 function coverUrl(book) { return book.coverUrl || (book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : ''); }
@@ -638,7 +664,7 @@ function showNowReadingSearch() {
     title: 'What are you reading?',
     subtitle: 'Search for your current book',
     placeholder: 'Search books...',
-    onSelect: (book, ov) => { saveNowReading(book); ov.remove(); toast('Now reading: ' + book.title); },
+    onSelect: (book, s) => { saveNowReading(book); s.remove(); toast('Now reading: ' + book.title); },
   });
 }
 
@@ -810,12 +836,12 @@ function showSearchModal() {
     title: 'Add a book',
     subtitle: 'Search by title, author, or ISBN',
     placeholder: 'Search books...',
-    onSelect: (book, ov) => addBook(book, ov),
+    onSelect: (book, s) => addBook(book, s),
   });
 }
 
-async function addBook(sr, ov) {
-  try { const b = await api('/books/upsert',{method:'POST',body:sr}); const ub = await api('/userbooks',{method:'POST',body:{bookId:b.id}}); state.userBooks.push(ub); renderShelf(); ov.remove(); toast('Added "'+b.title+'"'); } catch(e) { toast(e.message); }
+async function addBook(sr, s) {
+  try { const b = await api('/books/upsert',{method:'POST',body:sr}); const ub = await api('/userbooks',{method:'POST',body:{bookId:b.id}}); state.userBooks.push(ub); renderShelf(); s.remove(); toast('Added "'+b.title+'"'); } catch(e) { toast(e.message); }
 }
 
 /* ── DAILY PICK ── */
@@ -938,11 +964,11 @@ function showBuySearch() {
     title: 'Add to wishlist',
     subtitle: 'Search for a book you want',
     placeholder: 'Search books...',
-    onSelect: (book, ov) => {
+    onSelect: (book, s) => {
       state.buyList.push(book);
       localStorage.setItem('scout_buy_list', JSON.stringify(state.buyList));
       renderBuyList();
-      ov.remove();
+      s.remove();
       toast('Added "' + book.title + '" to wishlist');
     },
   });
@@ -1007,8 +1033,8 @@ document.getElementById('instore-btn').onclick = () => {
     title: 'Scout a book',
     subtitle: 'Search by title or author',
     placeholder: 'Search books...',
-    onSelect: async (book, ov) => {
-      ov.remove();
+    onSelect: async (book, s) => {
+      s.remove();
       const resultDiv = document.getElementById('instore-result');
       const cv = book.coverUrl || '';
       resultDiv.innerHTML = `

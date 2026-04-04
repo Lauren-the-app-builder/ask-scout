@@ -21,8 +21,16 @@ function formatBook(item) {
 }
 
 async function searchBooksOpenLibrary(query) {
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10&fields=key,title,author_name,first_publish_year,isbn,cover_i,subject`;
-  const { data } = await axios.get(url, { timeout: 8000 });
+  // Search with broader matching — try general search first, fall back to title search
+  let data;
+  try {
+    const res = await axios.get(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12&fields=key,title,author_name,first_publish_year,isbn,cover_i,subject`, { timeout: 6000 });
+    data = res.data;
+  } catch {
+    // Fallback: title-specific search
+    const res = await axios.get(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=12&fields=key,title,author_name,first_publish_year,isbn,cover_i,subject`, { timeout: 6000 });
+    data = res.data;
+  }
   return (data.docs || [])
     .filter(doc => doc.title) // skip entries with no title
     .map(doc => {
