@@ -26,7 +26,6 @@
 html { height: 100%; overflow: hidden; }
 body { background: var(--white); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; position: relative; height: 100%; overflow: hidden; }
 .page { overflow-y: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 50px - 56px); position: fixed; top: 50px; left: 0; right: 0; max-width: 430px; margin: 0 auto; }
-.page:has(#sec-taste.visible) { overflow: hidden; }
 
 /* TOP BAR — simplified for mobile */
 .topbar {
@@ -71,7 +70,8 @@ body { background: var(--white); color: var(--ink); font-family: 'Inter', system
 
 .page { padding-top: 0; padding-bottom: 20px; }
 .page-section { display: none; }
-.page-section.visible { display: block; height: 100%; position: relative; }
+.page-section.visible { display: block; }
+.page-section.visible { height: 100%; position: relative; overflow-y: auto; }
 
 /* HERO */
 .hero { padding: 36px 20px 32px; border-bottom: 1px solid var(--line); }
@@ -275,10 +275,11 @@ body { background: var(--white); color: var(--ink); font-family: 'Inter', system
 .verdict-label.no { color: var(--ink-muted); }
 
 /* ASK SCOUT (chat style) */
-.taste-chat { display: flex; flex-direction: column; position: absolute; inset: 0; }
+#sec-taste.visible { display: flex; flex-direction: column; }
+.taste-chat { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .taste-chat-header { padding: 14px 20px 10px; flex-shrink: 0; }
 .taste-messages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-.taste-input-bar { padding: 10px 20px 12px; display: flex; gap: 8px; flex-shrink: 0; border-top: 1px solid var(--line); align-items: center; background: white; }
+.taste-input-bar { padding: 10px 16px 12px; display: flex; gap: 8px; flex-shrink: 0; border-top: 1px solid var(--line); align-items: center; background: white; }
 .taste-attach { background: none; border: 1px solid var(--line); color: var(--ink-muted); width: 38px; height: 38px; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
 .taste-attach:hover { border-color: var(--red); color: var(--red); }
 .taste-chat-input { flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; font-family: 'Inter', sans-serif; color: var(--ink); outline: none; background: var(--paper); }
@@ -802,14 +803,70 @@ async function openBookDetail(book, isNowReading = false) {
     finBtn.style.cssText = 'margin-top:12px;font-size:11px;padding:7px 14px;';
     finBtn.textContent = '✓ Finished this book';
     finBtn.onclick = () => {
-      state.nowReading = null;
-      localStorage.removeItem('scout_now_reading');
-      renderNowReading();
       ov.remove();
-      toast('Nice! Set your next read anytime.');
+      showFinishedRating(book);
     };
     ov.querySelector('.bd-header').appendChild(finBtn);
   }
+}
+
+function showFinishedRating(book) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal-box" style="text-align:center;padding:32px 28px;">
+    <div style="font-size:28px;margin-bottom:8px;">📖</div>
+    <div class="modal-title" style="font-size:22px;">You finished it!</div>
+    <div class="modal-sub" style="margin-bottom:20px;">How was <em>${book.title}</em>?</div>
+    <div id="star-row" style="display:flex;justify-content:center;gap:6px;margin-bottom:20px;"></div>
+    <textarea id="finish-notes" class="modal-input" style="resize:none;height:70px;margin-bottom:8px;font-size:14px;" placeholder="Tell Scout what you thought... (optional)"></textarea>
+    <button class="modal-btn" id="finish-submit">Tell Scout</button>
+    <div class="modal-link" id="finish-skip">Skip</div>
+  </div>`;
+  document.body.appendChild(ov);
+
+  let selectedStars = 0;
+  const starRow = ov.querySelector('#star-row');
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement('button');
+    star.style.cssText = 'background:none;border:none;font-size:28px;cursor:pointer;padding:4px;transition:transform 0.1s;';
+    star.textContent = '☆';
+    star.onclick = () => {
+      selectedStars = i;
+      starRow.querySelectorAll('button').forEach((s, idx) => {
+        s.textContent = idx < i ? '★' : '☆';
+        s.style.color = idx < i ? 'var(--red)' : 'var(--ink-faint)';
+      });
+    };
+    star.style.color = 'var(--ink-faint)';
+    starRow.appendChild(star);
+  }
+
+  const submit = async () => {
+    const notes = ov.querySelector('#finish-notes').value.trim();
+    const ratingWords = ['', 'not for me', 'okay', 'liked it', 'loved it', 'absolutely loved it'];
+    const ratingText = selectedStars > 0 ? ratingWords[selectedStars] : '';
+    let msg = `I just finished "${book.title}" by ${book.author}.`;
+    if (ratingText) msg += ` I ${ratingText} (${selectedStars}/5 stars).`;
+    if (notes) msg += ` ${notes}`;
+    ov.querySelector('#finish-submit').disabled = true;
+    ov.querySelector('#finish-submit').textContent = 'Telling Scout...';
+    try {
+      await api('/chat/message', { method: 'POST', body: { content: msg } });
+      toast('Scout noted your thoughts on "' + book.title + '"');
+    } catch {}
+    state.nowReading = null;
+    localStorage.removeItem('scout_now_reading');
+    renderNowReading();
+    ov.remove();
+  };
+
+  ov.querySelector('#finish-submit').onclick = submit;
+  ov.querySelector('#finish-skip').onclick = () => {
+    state.nowReading = null;
+    localStorage.removeItem('scout_now_reading');
+    renderNowReading();
+    ov.remove();
+  };
 }
 
 document.getElementById('btn-edit').onclick = () => { state.editMode = !state.editMode; document.getElementById('btn-edit').textContent = state.editMode ? 'Done' : 'Edit list'; renderShelf(); };
@@ -854,11 +911,6 @@ async function loadDailyPick() {
 async function renderDailyPick() {
   const r = state.dailyPick; if (!r) return;
   const tm = r.match(/"([^"]+)"/);
-  // Hide if already on shortlist
-  if (tm && state.userBooks.some(ub => ub.book.title.toLowerCase() === tm[1].toLowerCase())) {
-    document.getElementById('pick-section').style.display = 'none';
-    return;
-  }
   document.getElementById('pick-section').style.display = '';
   const day = DAYS[new Date().getDay()];
   document.getElementById('pick-eyebrow-text').textContent = `✦ ${day}'s pick`;
@@ -1197,6 +1249,7 @@ botBtns.forEach(btn => {
     botBtns.forEach(n => n.classList.remove('active')); btn.classList.add('active');
     Object.values(sections).forEach(id => document.getElementById(id)?.classList.remove('visible'));
     if (sections[t]) document.getElementById(sections[t]).classList.add('visible');
+    document.querySelector('.page').style.overflow = t === 'taste' ? 'hidden' : 'auto';
   };
 });
 
