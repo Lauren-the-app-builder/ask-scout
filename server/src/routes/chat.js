@@ -31,11 +31,11 @@ ${p.notes ? `- Notes: ${p.notes}` : ''}
 
 Their current Up Next list: ${upNextTitles.length ? upNextTitles.join(', ') : 'empty'}
 
-IMPORTANT: Never recommend books that are already on the user's Up Next list above. Always suggest something new.
+IMPORTANT: Never recommend books that are already on the user's Up Next list above. If you catch yourself about to recommend one that's listed, pick a different book instead. Always suggest something new and fresh.
 
 When the user expresses an opinion about a book or author (loved/hated/not for me etc), acknowledge it naturally — the app will update the taste profile automatically.
 
-Give recommendations with title in quotes and author's full name. One recommendation at a time unless asked for more. Explain briefly why it fits their taste specifically.`;
+When you recommend a book, always put the title in "quotes" so the app can detect it and offer an add-to-shortlist button. Give the author's full name. One recommendation at a time unless asked for more. Explain briefly why it fits their taste specifically.`;
 }
 
 // Get chat history
