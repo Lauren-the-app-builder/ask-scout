@@ -26,6 +26,7 @@
 html { height: 100%; overflow: hidden; }
 body { background: var(--white); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; max-width: 430px; margin: 0 auto; position: relative; height: 100%; overflow: hidden; }
 .page { overflow-y: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 50px - 56px); position: fixed; top: 50px; left: 0; right: 0; max-width: 430px; margin: 0 auto; }
+.page:has(#sec-taste.visible) { overflow: hidden; }
 
 /* TOP BAR — simplified for mobile */
 .topbar {
@@ -61,16 +62,16 @@ body { background: var(--white); color: var(--ink); font-family: 'Inter', system
   font-family: 'Inter', sans-serif; user-select: none; position: relative;
 }
 .bot-btn-icon { font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; }
-.bot-btn-icon svg { color: var(--ink-muted); }
-.bot-btn.active .bot-btn-icon svg { color: var(--red); }
+.bot-btn-icon svg { color: var(--red); }
 .bot-btn-label { font-size: 9px; font-weight: 600; color: var(--ink-muted); transition: color 0.12s; }
 .bot-btn.active .bot-btn-label { color: var(--red); }
 .bot-btn.active::after { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--red); }
-.bot-btn:not(.active) .bot-btn-icon { opacity: 0.35; }
+.bot-btn:not(.active) .bot-btn-icon { opacity: 0.3; }
+.bot-btn.active .bot-btn-icon { opacity: 1; }
 
 .page { padding-top: 0; padding-bottom: 20px; }
 .page-section { display: none; }
-.page-section.visible { display: block; }
+.page-section.visible { display: block; height: 100%; position: relative; }
 
 /* HERO */
 .hero { padding: 36px 20px 32px; border-bottom: 1px solid var(--line); }
@@ -274,10 +275,10 @@ body { background: var(--white); color: var(--ink); font-family: 'Inter', system
 .verdict-label.no { color: var(--ink-muted); }
 
 /* ASK SCOUT (chat style) */
-.taste-chat { display: flex; flex-direction: column; height: 100%; }
-.taste-chat-header { padding: 16px 20px 12px; flex-shrink: 0; }
-.taste-messages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px; }
-.taste-input-bar { padding: 10px 20px; display: flex; gap: 8px; flex-shrink: 0; border-top: 1px solid var(--line); align-items: center; background: white; }
+.taste-chat { display: flex; flex-direction: column; position: absolute; inset: 0; }
+.taste-chat-header { padding: 14px 20px 10px; flex-shrink: 0; }
+.taste-messages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 12px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.taste-input-bar { padding: 10px 20px 12px; display: flex; gap: 8px; flex-shrink: 0; border-top: 1px solid var(--line); align-items: center; background: white; }
 .taste-attach { background: none; border: 1px solid var(--line); color: var(--ink-muted); width: 38px; height: 38px; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
 .taste-attach:hover { border-color: var(--red); color: var(--red); }
 .taste-chat-input { flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; font-family: 'Inter', sans-serif; color: var(--ink); outline: none; background: var(--paper); }
