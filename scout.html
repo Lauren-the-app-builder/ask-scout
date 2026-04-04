@@ -822,6 +822,12 @@ async function loadDailyPick() {
 async function renderDailyPick() {
   const r = state.dailyPick; if (!r) return;
   const tm = r.match(/"([^"]+)"/);
+  // Hide if already on shortlist
+  if (tm && state.userBooks.some(ub => ub.book.title.toLowerCase() === tm[1].toLowerCase())) {
+    document.getElementById('pick-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('pick-section').style.display = '';
   const day = DAYS[new Date().getDay()];
   document.getElementById('pick-eyebrow-text').textContent = `✦ ${day}'s pick`;
   document.getElementById('pick-title').textContent = tm ? tm[1] : 'Today\'s pick';
@@ -900,12 +906,18 @@ function renderBuyList() {
   if (!state.buyList.length) { el.innerHTML = '<div style="color:var(--ink-faint);font-size:11px;padding:8px 0;">No books yet — add ones you want.</div>'; return; }
   el.innerHTML = state.buyList.map((b, i) => {
     const cv = b.coverUrl || '';
-    return `<div class="buy-item">
+    return `<div class="buy-item" data-idx="${i}" style="cursor:pointer;">
       <div class="buy-cover">${cv ? `<img src="${cv}" onerror="this.style.opacity='0'">` : ''}</div>
       <div class="buy-info"><div class="buy-title">${b.title}</div><div class="buy-author">${b.author}</div></div>
-      <button class="buy-remove" onclick="removeBuyItem(${i})">✕</button>
+      <button class="buy-remove" onclick="event.stopPropagation();removeBuyItem(${i})">✕</button>
     </div>`;
   }).join('');
+  el.querySelectorAll('.buy-item').forEach(item => {
+    item.onclick = () => {
+      const book = state.buyList[parseInt(item.dataset.idx)];
+      if (book) openBookDetail(book, false);
+    };
+  });
 }
 
 function removeBuyItem(idx) {

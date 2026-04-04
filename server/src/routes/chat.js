@@ -31,6 +31,8 @@ ${p.notes ? `- Notes: ${p.notes}` : ''}
 
 Their current Up Next list: ${upNextTitles.length ? upNextTitles.join(', ') : 'empty'}
 
+IMPORTANT: Never recommend books that are already on the user's Up Next list above. Always suggest something new.
+
 When the user expresses an opinion about a book or author (loved/hated/not for me etc), acknowledge it naturally — the app will update the taste profile automatically.
 
 Give recommendations with title in quotes and author's full name. One recommendation at a time unless asked for more. Explain briefly why it fits their taste specifically.`;
@@ -132,7 +134,7 @@ router.get('/daily', auth, async (req, res) => {
       system: buildSystemPrompt(profile, upNextTitles),
       messages: [{
         role: 'user',
-        content: `Give me your single best book pick for me today. Be specific about why it suits my taste. Keep it to 2-3 sentences max.`,
+        content: `Give me your single best book pick for me today that is NOT already on my Up Next list. Do not recommend any book already in my list. Be specific about why it suits my taste. Keep it to 2-3 sentences max.`,
       }],
     });
 
