@@ -5,7 +5,7 @@
     "vercel-build": "prisma generate --schema=server/prisma/schema.prisma && prisma db push --schema=server/prisma/schema.prisma --skip-generate"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
+    "@anthropic-ai/sdk": "latest",
     "@prisma/client": "^5.14.0",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",

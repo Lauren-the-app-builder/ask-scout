@@ -22,7 +22,7 @@ async function checkAndUpdateTaste(userId, userMessage, profileRaw) {
   if (!opinionTriggers.some(t => lower.includes(t))) return null;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20241022',
+    model: 'claude-sonnet-4-5-20250514',
     max_tokens: 400,
     messages: [{
       role: 'user',
